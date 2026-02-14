@@ -1,0 +1,25 @@
+mot.reset=The game is running normally
+
+mot.command.rate.error.tooLow=Your value was too low ! The tick rate got forcefully set to the minimum value available: 0.01x (0.2 t/s)
+mot.command.rate.error.format=/tick rate <speed> (higher than 0.01)
+mot.command.rate.success=The tick rate 'target' got set to %sx (%s t/s)
+mot.command.rate.warning.slow.1=   WARNING MESSAGE !
+mot.command.rate.warning.slow.2=Slowing down tick rate this low can cause issue to revert back to normal through commands
+mot.command.rate.warning.slow.3=Re-enter the command to confirm
+
+mot.command.speedtest.result=The game currently run at: %sx (%s t/s)
+mot.command.speedtest.msg.1=Testing the current speed of your game, it will take 10 secs...
+mot.command.speedtest.msg.2=DON'T PAUSE THE GAME DURING THE PROCESS !
+
+mot.command.maxspeedtest.msg.1=Testing the highest speed your pc could handle, it will take 25 secs...
+mot.command.maxspeedtest.result=The game could run at max: %sx (%s t/s)
+
+mot.key.current=%s is set to %sx (%s t/s)
+mot.upKey.error=Speed is too low ! It should be at least above 1x (20 t/s) !
+mot.downKey.error=Speed is too high ! It should be at least below 1x (20 t/s) !
+mot.key.set=By pressing %s, the tick rate 'target' will be set to %sx (%s t/s)
+
+mot.freeze.serverError=Freezing the server doesn't work
+
+mot.command.playerAffected.affected=You are affected by modified tick rate
+mot.command.playerAffected.unaffected=You aren't affected by modified tick rate

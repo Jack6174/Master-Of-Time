@@ -4,16 +4,17 @@ import api.AddonHandler;
 import api.BTWAddon;
 import api.world.data.DataEntry;
 import api.world.data.DataProvider;
+import net.dravigen.master_of_time.commands.CommandTick;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.src.*;
 import org.lwjgl.input.Keyboard;
 
 import java.io.ByteArrayInputStream;
 import java.io.DataInputStream;
-import java.util.List;
 
 public class MasterOfTimeAddon extends BTWAddon {
 	
+	public static final String MoTChannel = "MoT|C2S";
 	private static final String PLAYER_OP_NAME = "PlayerOP";
 	public static final DataEntry.PlayerDataEntry<Boolean> PLAYER_OP = DataProvider.getBuilder(Boolean.class)
 			.name(PLAYER_OP_NAME)
@@ -64,6 +65,7 @@ public class MasterOfTimeAddon extends BTWAddon {
 	public static boolean maxSpeedTest = false;
 	public static double tps;
 	public static boolean step = false;
+	
 	public MasterOfTimeAddon() {
 		super();
 	}
@@ -82,255 +84,6 @@ public class MasterOfTimeAddon extends BTWAddon {
 	
 	public static void setDecreaseValue(WorldServer server, float value) {
 		server.setData(MASTER_OF_TIME_DATA, new float[]{server.getData(MASTER_OF_TIME_DATA)[0], value});
-	}
-	
-	private void createNewCommand() {
-		registerAddonCommand(new CommandBase() {
-			public static boolean warned = false;
-			
-			@Override
-			public String getCommandName() {
-				return "tick";
-			}
-			
-			@Override
-			public String getCommandUsage(ICommandSender iCommandSender) {
-				return "/tick <rate> <speed> OR /tick <reset> OR /tick <freeze> OR /tick <speedTest> OR /tick <maxSpeedTest> OR /tick <keySpeed> <upSpeedKey|downSpeedKey> <speed> OR /tick <playerAffected> <true|false>";
-			}
-			
-			@Override
-			public void processCommand(ICommandSender sender, String[] strings) {
-				WorldServer worldServer = MinecraftServer.getServer().worldServers[0];
-				if (strings.length == 0) throw new WrongUsageException(getCommandUsage(sender));
-				
-				switch (strings[0].toLowerCase()) {
-					case "rate" -> {
-						try {
-							if (strings.length < 2)
-								throw new WrongUsageException("/tick rate <speed> (higher than 0.01)");
-							
-							float speedModifier = Float.parseFloat(strings[1]);
-							
-							if (speedModifier < 0.05 && !warned) {
-								if (MinecraftServer.getServer().isDedicatedServer()) {
-									sender.sendChatToPlayer(ChatMessageComponent.createFromText("""
-																								-----------------------\
-																								
-																								   WARNING MESSAGE !\
-																								
-																								Slowing down tick rate this low can cause issue to revert back to normal through commands\
-																								
-																								Re-enter the command to confirm
-																								-----------------------""")
-																	.setColor(EnumChatFormatting.RED));
-									warned = true;
-									return;
-								}
-							}
-							if (speedModifier < 0.01F) {
-								speedModifier = 0.01F;
-								worldSpeedModifier = speedModifier;
-								sender.sendChatToPlayer(ChatMessageComponent.createFromText(
-										"Your value was too low ! The tick rate got forcefully set to the minimum value available: 0.01x (0.2 t/s)"));
-							}
-							else {
-								worldSpeedModifier = speedModifier;
-								sender.sendChatToPlayer(ChatMessageComponent.createFromText(
-										"The tick rate 'goal' got set to " +
-												String.format("%.2f", speedModifier) +
-												"x (" +
-												String.format("%.1f", speedModifier * 20) +
-												" t/s)"));
-							}
-							
-							
-						} catch (NumberFormatException e) {
-							throw new WrongUsageException("/tick rate <speed> (higher than 0.01)");
-						}
-					}
-					case "reset" -> {
-						worldSpeedModifier = 1.0F;
-						
-						sender.sendChatToPlayer(ChatMessageComponent.createFromText("The game is running normally"));
-					}
-					case "speedtest" -> {
-						currentSpeedTest = true;
-						sender.sendChatToPlayer(ChatMessageComponent.createFromText("""
-																					
-																					Testing the current speed of your game, it will take 10 secs...
-																					--------------------------------------
-																					DON'T PAUSE THE GAME DURING THE PROCESS !
-																					--------------------------------------"""));
-					}
-					case "maxspeedtest" -> {
-						worldSpeedModifier = 500F;
-						currentSpeedTest = true;
-						maxSpeedTest = true;
-						
-						sender.sendChatToPlayer(ChatMessageComponent.createFromText("""
-																					
-																					Testing the highest speed your pc could handle, it will take 25 secs...
-																					--------------------------------------
-																					DON'T PAUSE THE GAME DURING THE PROCESS !
-																					--------------------------------------"""));
-					}
-					case "keyspeed" -> {
-						try {
-							if (strings.length < 3) {
-								if (strings.length == 2) {
-									if (strings[1].equals("upSpeedKey")) {
-										sender.sendChatToPlayer(ChatMessageComponent.createFromText(Keyboard.getKeyName(
-												upSpeedKey.keyCode) +
-																											" is set to " +
-																											String.format(
-																													"%.2f",
-																													getUpSpeed(
-																															worldServer)) +
-																											"x (" +
-																											String.format(
-																													"%.1f",
-																													getUpSpeed(
-																															worldServer) *
-																															20) +
-																											" t/s)"));
-										
-										return;
-									}
-									else if (strings[1].equals("downSpeedKey")) {
-										sender.sendChatToPlayer(ChatMessageComponent.createFromText(Keyboard.getKeyName(
-												downSpeedKey.keyCode) +
-																											" is set to " +
-																											String.format(
-																													"%.2f",
-																													getDownSpeed(
-																															worldServer)) +
-																											"x (" +
-																											String.format(
-																													"%.1f",
-																													getDownSpeed(
-																															worldServer) *
-																															20) +
-																											" t/s)"));
-										return;
-									}
-								}
-								
-								throw new WrongUsageException("/tick keySpeed <upSpeedKey|downSpeedKey> <speed>");
-							}
-							
-							if (strings[1].equals("upSpeedKey")) {
-								if (Float.parseFloat(strings[2]) <= 1) {
-									sender.sendChatToPlayer(ChatMessageComponent.createFromText(
-													"Speed is too low ! It should be at least above 1x (20 t/s) !")
-																	.setColor(EnumChatFormatting.RED));
-									
-									return;
-								}
-								
-								setIncreaseValue(worldServer, Math.min(250, Float.parseFloat(strings[2])));
-								sender.sendChatToPlayer(ChatMessageComponent.createFromText("By pressing " +
-																									Keyboard.getKeyName(
-																											upSpeedKey.keyCode) +
-																									", the tick rate 'goal' will be set to " +
-																									String.format("%.2f",
-																												  getUpSpeed(
-																														  worldServer)) +
-																									"x (" +
-																									String.format("%.1f",
-																												  getUpSpeed(
-																														  worldServer) *
-																														  20) +
-																									" t/s)"));
-							}
-							else if (strings[1].equals("downSpeedKey")) {
-								if (Float.parseFloat(strings[2]) >= 1) {
-									sender.sendChatToPlayer(ChatMessageComponent.createFromText(
-													"Speed is too high ! It should be at least below 1x (20 t/s) !")
-																	.setColor(EnumChatFormatting.RED));
-									
-									return;
-								}
-								
-								setDecreaseValue(worldServer, Math.max(0.01F, Float.parseFloat(strings[2])));
-								sender.sendChatToPlayer(ChatMessageComponent.createFromText("By pressing " +
-																									Keyboard.getKeyName(
-																											downSpeedKey.keyCode) +
-																									", the tick rate 'goal' will be set to " +
-																									String.format("%.2f",
-																												  getDownSpeed(
-																														  worldServer)) +
-																									"x (" +
-																									String.format("%.1f",
-																												  getDownSpeed(
-																														  worldServer) *
-																														  20) +
-																									" t/s)"));
-							}
-						} catch (NumberFormatException e) {
-							throw new WrongUsageException("/tick keySpeed upSpeedKey/downSpeedKey <speed>");
-						}
-					}
-					case "freeze" -> {
-						if (MinecraftServer.getServer().isDedicatedServer()) {
-							sender.sendChatToPlayer(ChatMessageComponent.createFromText(
-									"Freezing the server doesn't work properly").setColor(EnumChatFormatting.RED));
-							return;
-						}
-						
-						worldSpeedModifier = 0;
-					}
-					case "playeraffected" -> {
-						try {
-							if (strings.length < 2) {
-								sender.sendChatToPlayer(ChatMessageComponent.createFromText(getPlayer(sender,
-																									  sender.getCommandSenderName()).getData(
-										TIME_AFFECTED)
-																							? "You are currently affected by modified tick rate"
-																							: "You aren't currently affected by modified tick rate"));
-								
-								return;
-							}
-							
-							boolean affected = Boolean.parseBoolean(strings[1]);
-							getPlayer(sender, sender.getCommandSenderName()).setData(TIME_AFFECTED, affected);
-							
-							if (affected) {
-								sender.sendChatToPlayer(ChatMessageComponent.createFromText(
-										"You are now affected by modified tick rate"));
-							}
-							else {
-								sender.sendChatToPlayer(ChatMessageComponent.createFromText(
-										"You are now no longer affected by modified tick rate"));
-							}
-						} catch (Exception ignored) {
-							throw new WrongUsageException("/tick playerAffected <true|false>");
-						}
-					}
-				}
-			}
-			
-			@SuppressWarnings("rawtypes")
-			@Override
-			public List addTabCompletionOptions(ICommandSender par1ICommandSender, String[] par2ArrayOfStr) {
-				if (par2ArrayOfStr.length == 1) {
-					return getListOfStringsMatchingLastWord(par2ArrayOfStr,
-															"rate",
-															"reset",
-															"freeze",
-															"speedTest",
-															"maxSpeedTest",
-															"keySpeed",
-															"playerAffected");
-				}
-				else if (par2ArrayOfStr.length == 2 && par2ArrayOfStr[0].equalsIgnoreCase("keySpeed")) {
-					return getListOfStringsMatchingLastWord(par2ArrayOfStr, "upSpeedKey", "downSpeedKey");
-				}
-				else if (par2ArrayOfStr.length == 2 && par2ArrayOfStr[0].equalsIgnoreCase("playerAffected")) {
-					return getListOfStringsMatchingLastWord(par2ArrayOfStr, "true", "false");
-				}
-				return null;
-			}
-		});
 	}
 	
 	public void initKeybind() {
@@ -352,7 +105,8 @@ public class MasterOfTimeAddon extends BTWAddon {
 	@Override
 	public void initialize() {
 		AddonHandler.logMessage(this.getName() + " Version " + this.getVersionString() + " Initializing...");
-		createNewCommand();
+		registerAddonCommand(new CommandTick());
+		
 		if (!MinecraftServer.getIsServer()) {
 			initKeybind();
 		}
@@ -382,12 +136,13 @@ public class MasterOfTimeAddon extends BTWAddon {
 						if (value > 1) {
 							worldSpeedModifier = value;
 							server.getConfigurationManager()
-									.sendChatMsg(ChatMessageComponent.createFromText(
-											"The tick rate 'goal' got set to " +
-													String.format("%.2f", value) +
-													"x (" +
-													String.format("%.1f", value * 20) +
-													" t/s)"));
+									.sendChatMsg(ChatMessageComponent.createFromText("The tick rate 'goal' got set to " +
+																							 String.format("%.2f",
+																										   value) +
+																							 "x (" +
+																							 String.format("%.1f",
+																										   value * 20) +
+																							 " t/s)"));
 						}
 						else {
 							player.sendChatToPlayer(ChatMessageComponent.createFromText(
@@ -400,12 +155,13 @@ public class MasterOfTimeAddon extends BTWAddon {
 						if (value < 1) {
 							worldSpeedModifier = value;
 							server.getConfigurationManager()
-									.sendChatMsg(ChatMessageComponent.createFromText(
-											"The tick rate 'goal' got set to " +
-													String.format("%.2f", value) +
-													"x (" +
-													String.format("%.1f", value * 20) +
-													" t/s)"));
+									.sendChatMsg(ChatMessageComponent.createFromText("The tick rate 'goal' got set to " +
+																							 String.format("%.2f",
+																										   value) +
+																							 "x (" +
+																							 String.format("%.1f",
+																										   value * 20) +
+																							 " t/s)"));
 						}
 						else {
 							player.sendChatToPlayer(ChatMessageComponent.createFromText(
@@ -417,8 +173,6 @@ public class MasterOfTimeAddon extends BTWAddon {
 			}
 		});
 	}
-	
-	public static final String MoTChannel = "MoT|C2S";
 }
 
 

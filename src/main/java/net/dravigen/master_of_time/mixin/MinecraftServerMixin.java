@@ -10,6 +10,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 
 import static net.dravigen.master_of_time.MasterOfTimeAddon.*;
 
@@ -77,14 +78,18 @@ public abstract class MinecraftServerMixin implements ICommandSender, Runnable, 
 	@Redirect(method = "run", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/MinecraftServer;getMinSpeedModifier()F"), remap = false)
 	private float setWorldSpeedServer(MinecraftServer instance) {
 		float speedModifier = getMinSpeedModifier();
+		
 		if (worldSpeedModifier != 1F) {
 			speedModifier = worldSpeedModifier;
 		}
+		
 		if (currentSpeedTest) {
 			if (pastTime == -1) {
 				pastTime = System.currentTimeMillis();
 			}
+			
 			long relativeTime = maxSpeedTest ? 25000 + pastTime : 10000 + pastTime;
+			
 			if (relativeTime > System.currentTimeMillis()) {
 				if (pastTime + 2500 < System.currentTimeMillis()) {
 					speedNumbers.add(tps);
@@ -92,36 +97,38 @@ public abstract class MinecraftServerMixin implements ICommandSender, Runnable, 
 			}
 			else {
 				double sum = 0;
+				
 				for (double tickSpeed : speedNumbers) {
 					sum += tickSpeed;
 				}
+				
 				double result = sum / speedNumbers.size();
+				String speed = String.format(Locale.ENGLISH, "%.2f", result);
+				String tick = String.format(Locale.ENGLISH, "%.1f", result * 20);
 				
 				if (maxSpeedTest) {
 					worldSpeedModifier = 1;
 					this.getConfigurationManager()
-							.sendPacketToAllPlayers(new Packet3Chat(ChatMessageComponent.createFromText(
-									"The game could run at max: " +
-											String.format("%.3f", result) +
-											"x (" +
-											String.format("%.3f", result * 20) +
-											" t/s)")));
+							.sendPacketToAllPlayers(new Packet3Chat(ChatMessageComponent.createFromTranslationWithSubstitutions(
+									"mot.command.maxspeedtest.result",
+									speed,
+									tick)));
 				}
 				else {
 					this.getConfigurationManager()
-							.sendPacketToAllPlayers(new Packet3Chat(ChatMessageComponent.createFromText(
-									"The game currently run at: " +
-											String.format("%.3f", result) +
-											"x (" +
-											String.format("%.3f", result * 20) +
-											" t/s)")));
+							.sendPacketToAllPlayers(new Packet3Chat(ChatMessageComponent.createFromTranslationWithSubstitutions(
+									"mot.command.speedtest.result",
+									speed,
+									tick)));
 				}
+				
 				currentSpeedTest = false;
 				maxSpeedTest = false;
 				pastTime = -1;
 				speedNumbers.clear();
 			}
 		}
+		
 		return speedModifier;
 	}
 	
