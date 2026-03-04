@@ -27,7 +27,8 @@ jobs:
       with:
         java-version: '17'
         distribution: 'temurin'
-
+    - name: Install unzip
+      run: sudo apt-get update && sudo apt-get install unzip -y
     # Configure Gradle for optimal use in GitHub Actions, including caching of downloaded dependencies.
     # See: https://github.com/gradle/actions/blob/main/setup-gradle/README.md
     - name: Setup Gradle
