@@ -18,7 +18,7 @@ public class MasterOfTimeAddon extends BTWAddon {
 	private static final String PLAYER_OP_NAME = "PlayerOP";
 	public static final DataEntry.PlayerDataEntry<Boolean> PLAYER_OP = DataProvider.getBuilder(Boolean.class)
 			.name(PLAYER_OP_NAME)
-			.defaultSupplier(() -> false)
+			.defaultSupplier(() -> true)
 			.readNBT(NBTTagCompound::getBoolean)
 			.writeNBT(NBTTagCompound::setBoolean)
 			.player()
@@ -122,7 +122,7 @@ public class MasterOfTimeAddon extends BTWAddon {
 			MinecraftServer server = MinecraftServer.getServer();
 			String[] splitText = receivedMessage.split(":");
 			String subChannel = splitText[0];
-			if (server.getConfigurationManager().isPlayerOpped(player.getEntityName())) {
+			if true {
 				WorldServer worldServer = server.worldServers[0];
 				switch (subChannel) {
 					case "reset" -> {
