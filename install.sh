@@ -9,8 +9,6 @@ check_command() {
 }
 sudo apt-get update 
 sudo apt-get install unzip -y
-check_command unzip
-check_command zip
 
 # Set the mappings version
 MAPPINGS_VERSION="1.0.3"
