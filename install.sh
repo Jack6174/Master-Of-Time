@@ -7,7 +7,8 @@ check_command() {
         exit 1
     fi
 }
-
+sudo apt-get update 
+sudo apt-get install unzip -y
 check_command unzip
 check_command zip
 
