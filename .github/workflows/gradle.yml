@@ -34,9 +34,9 @@ jobs:
       uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
 
     - name: Build script perms
-      run: chmod +x /GITHUB_WORKSPACE/install.sh
+      run: chmod +x $GITHUB_WORKSPACE/install.sh
     - name: Build for real lmao
-      run: sh /GITHUB_WORKSPACE/install.sh
+      run: sh $GITHUB_WORKSPACE/install.sh
 
     # NOTE: The Gradle Wrapper is the default and recommended way to run Gradle (https://docs.gradle.org/current/userguide/gradle_wrapper.html).
     # If your project does not have the Gradle Wrapper configured, you can use the following configuration to run Gradle with a specified version.
