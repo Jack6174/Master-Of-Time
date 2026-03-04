@@ -34,7 +34,7 @@ jobs:
       uses: gradle/actions/setup-gradle@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
 
     - name: Build script perms
-      run: chmod /GITHUB_WORKSPACE/install.sh +x
+      run: chmod +x /GITHUB_WORKSPACE/install.sh
     - name: Build for real lmao
       run: sh /GITHUB_WORKSPACE/install.sh
 
